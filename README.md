@@ -20,5 +20,8 @@ npm run build
 npm run lint
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### description
+Приложение создано с использованием технологии vue-cli, требование к верстке, технической части выполнены согласно ТЗ.
+
+### author
+Златомрежев Богдан
