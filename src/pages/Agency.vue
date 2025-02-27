@@ -17,4 +17,5 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 .text
   margin-top: 5rem
   font-size: 2rem
+  margin-bottom: 35rem;
 </style>

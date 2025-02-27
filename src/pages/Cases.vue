@@ -2,6 +2,7 @@
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import Projects from '../components/Projects.vue'
 import Form from '../components/Form.vue'
+
 </script>
 
 <template>

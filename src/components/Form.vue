@@ -1,11 +1,11 @@
 <script setup>
 import axios from '@/plugins/axios'
 import useVuelidate from '@vuelidate/core'
-import { required, email, minLength, maxLength, helpers,sameAs  } from '@vuelidate/validators'
+import { required, email, minLength, maxLength, helpers, sameAs } from '@vuelidate/validators'
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
+import Swal from 'sweetalert2'
 
 const isMobile = ref(false)
-const dialog = ref(false)
 const form = ref(null)
 
 const formData = reactive({
@@ -34,7 +34,7 @@ const rules = {
       phoneDigitsAndPlus,
     },
     message: { required },
-    agreement: {sameAs: sameAs(true)},
+    agreement: { sameAs: sameAs(true) },
   },
 }
 
@@ -42,10 +42,12 @@ const $v = useVuelidate(rules, { formData })
 
 // methods
 const submitForm = async () => {
-  if(isMobile.value) {
+  if (isMobile.value) {
     formData.agreement = true
   }
+
   $v.value.$touch()
+
   if ($v.value.$invalid) {
     return
   } else {
@@ -61,8 +63,25 @@ const submitForm = async () => {
         .then((response) => {
           console.log(response)
         })
+      await Swal.fire({
+        title: 'Успех!',
+        text: 'Вы успешно отправили информацию о вашем проекте!',
+        icon: 'success',
+      })
     } catch (error) {
-      console.log(error)
+      if (error.response && error.response.status === 422) {
+        await Swal.fire({
+          title: 'Ошибка валидации',
+          text: 'Произошла ошибка при отправке формы. Пожалуйста, попробуйте снова.',
+          icon: 'error',
+        })
+      } else {
+        await Swal.fire({
+          title: 'Ошибка',
+          text: 'Произошла ошибка при отправке формы. Пожалуйста, попробуйте снова.',
+          icon: 'error',
+        })
+      }
     }
     resetForm()
   }
@@ -139,14 +158,6 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <v-dialog v-model="dialog" max-width="500">
-    <v-card>
-      <v-card-title>Форма успешно отправлена!</v-card-title>
-      <v-card-actions>
-        <v-btn color="primary" @click="dialog = false">Закрыть</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
   <div class="sending">
     <div class="wrap">
       <div class="box">
@@ -203,7 +214,6 @@ onBeforeUnmount(() => {
                 *Введите корректный номер (+7 или 8)
               </span>
             </span>
-
           </div>
         </div>
         <div class="form__container-textarea">
@@ -215,7 +225,9 @@ onBeforeUnmount(() => {
             class="form__textarea"
             :placeholder="placeholderMsg"
           ></textarea>
-          <span v-if="defaultError('message')" class="form__item-noticeArea">*Необходимо указать сообщение</span>
+          <span v-if="defaultError('message')" class="form__item-noticeArea"
+            >*Необходимо указать сообщение</span
+          >
         </div>
         <div v-if="!isMobile" class="form__container-checkbox d-flex align-items-center">
           <input
@@ -225,7 +237,9 @@ onBeforeUnmount(() => {
             id="agreement"
           />
           <label for="agreement">Согласие на обработку персональных данных</label>
-          <span v-if="defaultError('agreement')" class="form__item-noticeCheckbox">*Необходимо ваше согласие</span>
+          <span v-if="defaultError('agreement')" class="form__item-noticeCheckbox"
+            >*Необходимо ваше согласие</span
+          >
         </div>
         <button type="submit" class="form__submit">{{ textBtn }}</button>
         <div class="form__warning" v-if="isMobile">
@@ -248,10 +262,6 @@ mqPhone = "only screen and (max-width: " + $mobile + ")"
     margin-top: 3.1875rem; // 51px / 16
     margin-bottom: 2.053125rem; // 32.85px / 16
 
-.wrap
-  max-width: 1240px;
-  padding: 0 1.25rem;
-  margin: auto;
 
 .form
   font-size: 1.125rem; // 18px / 16
