@@ -1,9 +1,13 @@
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import axios from '@/plugins/axios'
+import useVuelidate from '@vuelidate/core'
+import { required, email, minLength, maxLength, helpers,sameAs  } from '@vuelidate/validators'
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 
 const isMobile = ref(false)
+const dialog = ref(false)
 const form = ref(null)
+
 const formData = reactive({
   name: '',
   email: '',
@@ -12,10 +16,39 @@ const formData = reactive({
   agreement: false,
 })
 
+// Кастомный валидатор для телефона (только цифры и +)
+const phoneDigitsAndPlus = helpers.regex(/^[0-9+]+$/)
+
+// Кастомный валидатор для начала телефона (8 или +7)
+const phoneStartsWith = helpers.regex(/^(8|\+7)/)
+
+const rules = {
+  formData: {
+    name: { required },
+    email: { required, email },
+    phone: {
+      required,
+      minLength: minLength(10),
+      maxLength: maxLength(12),
+      phoneStartsWith,
+      phoneDigitsAndPlus,
+    },
+    message: { required },
+    agreement: {sameAs: sameAs(true)},
+  },
+}
+
+const $v = useVuelidate(rules, { formData })
+
 // methods
 const submitForm = async () => {
-  const isValid = form.value.checkValidity()
-  if (isValid) {
+  if(isMobile.value) {
+    formData.agreement = true
+  }
+  $v.value.$touch()
+  if ($v.value.$invalid) {
+    return
+  } else {
     const { name, email, phone, message } = formData
     try {
       await axios
@@ -41,6 +74,7 @@ const resetForm = () => {
   formData.phone = ''
   formData.message = ''
   formData.agreement = false
+  $v.value.$reset()
 }
 
 const checkScreenSize = () => {
@@ -81,6 +115,19 @@ const placeholderMsg = computed(() => {
   return text
 })
 
+// условия для выведения ошибок
+const defaultError = (property) => {
+  return $v.value.formData[property].$error
+}
+
+const requiredError = (property) => {
+  return $v.value.formData[property].required.$invalid
+}
+
+const typeError = (property, type) => {
+  return $v.value.formData[property][type].$invalid
+}
+
 onMounted(() => {
   checkScreenSize()
   window.addEventListener('resize', checkScreenSize)
@@ -90,7 +137,16 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', checkScreenSize)
 })
 </script>
+
 <template>
+  <v-dialog v-model="dialog" max-width="500">
+    <v-card>
+      <v-card-title>Форма успешно отправлена!</v-card-title>
+      <v-card-actions>
+        <v-btn color="primary" @click="dialog = false">Закрыть</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
   <div class="sending">
     <div class="wrap">
       <div class="box">
@@ -105,33 +161,49 @@ onBeforeUnmount(() => {
               type="text"
               v-model="formData.name"
               id="name"
-              required
               class="form__item-input"
               :placeholder="placeholderName"
             />
+            <span v-if="defaultError('name')" class="form__item-notice">*Имя обязательно</span>
           </div>
           <div class="form__item">
             <label for="email" class="form__item-name" v-if="!isMobile">Email*</label>
             <input
-              type="email"
               class="form__item-input"
               v-model="formData.email"
               id="email"
-              required
               :placeholder="placeholderMail"
             />
+            <span v-if="defaultError('email')" class="form__item-notice">
+              <span v-if="requiredError('email')">*Email обязателен</span>
+              <span v-if="!requiredError('email') && typeError('email', 'email')">
+                *Введите корректный email
+              </span>
+            </span>
           </div>
           <div class="form__item">
             <label for="phone" class="form__item-name" v-if="!isMobile">Телефон*</label>
             <input
-              type="tel"
-              pattern="^\d{10,15}$"
               v-model="formData.phone"
               id="phone"
-              required
               class="form__item-input"
               :placeholder="placeholderPhone"
             />
+            <span v-if="defaultError('phone')" class="form__item-notice">
+              <span v-if="requiredError('phone')">*Телефон обязателен</span>
+              <span
+                v-if="
+                  !requiredError('phone') &&
+                  (typeError('phone', 'minLength') ||
+                    typeError('phone', 'maxLength') ||
+                    typeError('phone', 'phoneDigitsAndPlus') ||
+                    typeError('phone', 'phoneStartsWith'))
+                "
+              >
+                *Введите корректный номер (+7 или 8)
+              </span>
+            </span>
+
           </div>
         </div>
         <div class="form__container-textarea">
@@ -141,9 +213,9 @@ onBeforeUnmount(() => {
             v-model="formData.message"
             id="message"
             class="form__textarea"
-            required
             :placeholder="placeholderMsg"
           ></textarea>
+          <span v-if="defaultError('message')" class="form__item-noticeArea">*Необходимо указать сообщение</span>
         </div>
         <div v-if="!isMobile" class="form__container-checkbox d-flex align-items-center">
           <input
@@ -151,11 +223,11 @@ onBeforeUnmount(() => {
             type="checkbox"
             v-model="formData.agreement"
             id="agreement"
-            required
           />
           <label for="agreement">Согласие на обработку персональных данных</label>
+          <span v-if="defaultError('agreement')" class="form__item-noticeCheckbox">*Необходимо ваше согласие</span>
         </div>
-        <button type="submit " class="form__submit">{{ textBtn }}</button>
+        <button type="submit" class="form__submit">{{ textBtn }}</button>
         <div class="form__warning" v-if="isMobile">
           Нажимая “Отправить”, Вы даете согласие на обработку персональных данных
         </div>
@@ -177,7 +249,7 @@ mqPhone = "only screen and (max-width: " + $mobile + ")"
     margin-bottom: 2.053125rem; // 32.85px / 16
 
 .wrap
-  max-width: 1240px; 
+  max-width: 1240px;
   padding: 0 1.25rem;
   margin: auto;
 
@@ -208,6 +280,7 @@ mqPhone = "only screen and (max-width: " + $mobile + ")"
         margin-top: 0;
     &-checkbox
       margin-top: 2.6875rem; // 43px / 16
+      position: relative;
     &-inputs
       @media mqPhone
         display: grid;
@@ -258,6 +331,21 @@ mqPhone = "only screen and (max-width: " + $mobile + ")"
         margin-bottom: 1.375rem; // 22px / 16
         width: -webkit-fill-available;
         font-size: 0.8125rem; // 13px / 16
+    &-notice
+      position: absolute;
+      top: 4rem;
+      left: 0;
+      color: #e37777;
+    &-noticeArea
+      position: absolute;
+      top: 9rem;
+      left: 0;
+      color: #e37777;
+    &-noticeCheckbox
+      position: absolute;
+      top: 2rem;
+      left: 0;
+      color: #e37777;
   &__submit
     background-color: #2D76F9;
     padding: 1.25rem 2.8125rem; // 20px / 16, 45px / 16
