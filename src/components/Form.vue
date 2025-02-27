@@ -346,11 +346,16 @@ mqPhone = "only screen and (max-width: " + $mobile + ")"
       top: 4rem;
       left: 0;
       color: #e37777;
+      @media mqPhone
+        top: 3.5rem;
+        font-size: 0.7rem;
     &-noticeArea
       position: absolute;
       top: 9rem;
       left: 0;
       color: #e37777;
+      @media mqPhone
+        font-size: 0.7rem;
     &-noticeCheckbox
       position: absolute;
       top: 2rem;

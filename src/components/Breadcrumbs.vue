@@ -38,9 +38,9 @@ mqPhone = "only screen and (max-width: " + $mobile + ")"
 
 .breadcrumbs
   font-size: 1.125rem // 18px
-  margin-top: 66px
+  margin-top: 4.125rem // 66px
   @media mqPhone
-    margin-top: 46.20px
+    margin-top: 2.8875rem // 46.20px
     font-size: 0.75rem // 12px
 
   &__wrap

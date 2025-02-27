@@ -27,35 +27,35 @@ mqPhone  = "only screen and (max-width: " + $mobile + ")"
 
 .footer
   background-color: #313341
-  padding 131px 0 151px 0
+  padding 8.1875rem 0 9.4375rem 0
   @media mqPhone
-    padding: 32.94px 0 48px 0;
+    padding: 2.05875rem 0 3rem 0;
   &__container
     @media mqPhone
       display: block;
   &__company
-    margin-right: 157px;
+    margin-right: 9.8125rem;
     @media mqPhone
       margin: auto;
       width: fit-content;
   &__logo
     background-image: url('./logo.svg')
-    width: 196px;
-    height: 41.28px;
+    width: 12.25rem;
+    height: 2.58rem;
     background-repeat: no-repeat;
     background-size: contain;
-    margin-bottom: 28px;
+    margin-bottom: 1.75rem;
     @media mqPhone
-      width: 102px;
-      height: 21.48px;
-      margin: 0 auto 11.25px auto;
+      width: 6.375rem;
+      height: 1.3425rem;
+      margin: 0 auto 0.703125rem auto;
   &__description
     display: block;
-    max-width: 188px;
+    max-width: 11.75rem;
     @media mqPhone
-      font-size: 13px;
+      font-size: 0.8125rem;
       text-align: center;
-      margin-bottom: 38px;
+      margin-bottom: 2.375rem;
   &__address
     display: grid;
     grid-template-columns: repeat(3, 1fr);
